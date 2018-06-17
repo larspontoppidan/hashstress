@@ -2,8 +2,8 @@
 
 # Filename    : hashstress
 # Description : A stress-test of I/O, cache and processing correctness by repeated hash calculations
-# URL         : http://larsee.com/blog/tag/hashstress
-# License     : MIT
+# URL         : https://larsee.com/blog/tag/hashstress.html
+# License     : BSD 2-Clause
 
 REVISION="2018-06-17"
 

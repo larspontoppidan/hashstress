@@ -2,7 +2,7 @@
 
 A script for multithreaded stress test of I/O, cache and processing correctness using hash calculations
 
-Read more: https://larsee.com/blog/tag/hashstress
+Read more: https://larsee.com/blog/tag/hashstress.html
 
 `hashstress` is a script for stressing and testing the correctness of disk I/O, cache, memory and processing subsystems for an extended period of time. The basic idea is to generate files with random content and repeatedly calculate hash checksums verifying that they are the same every time. 
 
