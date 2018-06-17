@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Filename    : hashstress
+# Description : A stress-test of I/O, cache and processing correctness by repeated hash calculations
+# URL         : http://larsee.com/blog/tag/hashstress
+# License     : MIT
+
+REVISION="2018-06-17"
+
+echo "hashstress rev. ${REVISION}, see more: http://larsee.com/blog/tag/hashstress"
+
+syntaxhelp="
+Syntax: $0 <size pr. thread> <threads> <repetitions> <hash-cmd>
+
+Example: $0 1G 4 20 md5sum
+"
+
+if [ ! $# -eq 4 ]
+then 
+  echo "${syntaxhelp}"
+  exit 1
+fi
+
+SIZE=$1
+THREADS=$2
+TESTS=$3
+HASH_CMD=$4
+
+TMP_DIR=/tmp/hashstress
+
+echo "Test config:"
+echo " - Data set: $THREADS file(s) each $SIZE"
+echo " - Threads: $THREADS, repetitions: $TESTS"
+echo " - Hash command: $HASH_CMD"
+echo "" 
+echo "Start time: `date`"
+echo "Generating random data file(s) ..."
+
+CUR_DIR=`pwd`
+rm -rf "${TMP_DIR}"
+mkdir -p "${TMP_DIR}"
+cd "${TMP_DIR}"
+
+for (( j = 1; j <= ${THREADS}; j++ ))
+do
+  touch "testdata-${j}"
+  shred -n 1 -s $SIZE "testdata-${j}"
+done
+
+wait
+
+echo "Generating reference checksum(s) ..."
+
+for (( j = 1; j <= ${THREADS}; j++ ))
+do
+  $HASH_CMD "testdata-${j}" > "chkref-${j}" &
+done
+
+wait
+
+TIME_SEC=$SECONDS
+FAILURES=0
+
+echo -n "Repetition:"
+for (( i = 1; i <= ${TESTS}; i++ ))
+do
+  echo -n " ${i}"
+  for (( j = 1; j <= ${THREADS}; j++ ))
+  do
+    rm -f "chktest-${j}"
+    $HASH_CMD "testdata-${j}" > "chktest-${j}" &
+  done
+
+  wait
+
+  for (( j = 1; j <= ${THREADS}; j++ ))
+  do
+    if ! cmp -s "chkref-${j}" "chktest-${j}"
+    then
+      echo ""
+      echo "FAIL! Wrong checksum in thread ${j}"
+      ((FAILURES += 1))
+    fi
+  done
+done
+
+TIME_SEC=$((SECONDS - TIME_SEC))
+
+echo ""
+echo "Cleaning up"
+cd "${CUR_DIR}"
+rm -rf ${TMP_DIR}
+
+echo "Repetitions took: $TIME_SEC seconds"
+
+if [ $FAILURES = 0 ]
+then
+  echo "Test result: PASS"
+else
+  echo "Test result: FAIL, failure count: $FAILURES"
+fi
+echo ""
+
